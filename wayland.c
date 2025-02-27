@@ -463,7 +463,7 @@ int menu_run(struct menu *menu) {
 	wl_surface_commit(context->surface);
 	wl_display_roundtrip(context->display);
 	menu_render_items(menu);
-	if (menu->initial_index >= 0 && (uint32_t)menu->initial_index < menu->item_count)
+	if (strlen(menu->input) == 0 && menu->initial_index >= 0 && (uint32_t)menu->initial_index < menu->item_count)
 		menu->sel = menu->items + menu->initial_index;
 	render_menu(menu);
 
