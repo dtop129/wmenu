@@ -29,14 +29,14 @@ struct menu *menu_create() {
 	menu->font = "monospace 13";
 	menu->normalbg = 0x1f1f28ff;
 	menu->normalfg = 0x957fb8ff;
-	menu->promptbg = 0x005577ff;
-	menu->promptfg = 0xeeeeeeff;
 	menu->selectionbg = 0x2e2b47ff;
 	menu->selectionfg = 0x7fb4caff;
 	menu->selectedbg = 0x353252ff;
 	menu->selectedfg = 0xf9cb8cff;
 	menu->selectoverbg = 0x3e3a61ff;
 	menu->selectoverfg = 0xf083a2ff;
+	menu->promptbg = menu->selectionbg;
+	menu->promptfg = menu->selectionfg;
 	menu->test_surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
 	menu->test_cairo = cairo_create(menu->test_surface);
 	menu->line_height = 33;
