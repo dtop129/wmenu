@@ -91,12 +91,12 @@ static bool parse_color(const char *color, uint32_t *result) {
 // Parse menu options from command line arguments.
 void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 	const char *usage =
-		"Usage: wmenu [-biPvr1] [-e height] [-f font] [-l lines] [-o output] [-p prompt]\n"
+		"Usage: wmenu [-biPvr1x] [-e height] [-f font] [-l lines] [-o output] [-p prompt]\n"
 		"\t[-N color] [-n color] [-M color] [-m color] [-S color] [-s color]\n"
 		"\t[-T color] [-t color] [-U color] [-u color]\n";
 
 	int opt;
-	while ((opt = getopt(argc, argv, "bhiPvr1e:f:l:o:p:N:n:M:m:S:s:T:t:U:u:")) != -1) {
+	while ((opt = getopt(argc, argv, "bhiPvr1x:e:f:l:o:p:N:n:M:m:S:s:T:t:U:u:")) != -1) {
 		switch (opt) {
 		case 'b':
 			menu->bottom = true;
@@ -127,6 +127,11 @@ void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 			break;
 		case '1':
 			menu->nomulti = true;
+			break;
+		case 'x':
+			menu->printindex = true;
+			menu->restricted = true;
+			menu->start_index = atoi(optarg);
 			break;
 		case 'e':
 			menu->line_height = atoi(optarg);
@@ -771,11 +776,18 @@ void menu_print_and_exit(struct menu *menu, bool print_query) {
 		puts(menu->input);
 	} else {
 		if (menu->selcount == 0)
-			puts(menu->sel->text);
+			if (menu->printindex)
+				printf("%d\n", menu->sel->id + menu->start_index);
+			else
+				puts(menu->sel->text);
 		else
 			for (size_t i = 0; i < menu->selidsize; i++)
-				if (menu->selid[i] != -1)
-					puts(menu->items[menu->selid[i]].text);
+				if (menu->selid[i] != -1) {
+					if (menu->printindex)
+						printf("%d\n", menu->items[menu->selid[i]].id + menu->start_index);
+					else
+						puts(menu->items[menu->selid[i]].text);
+				}
 	}
 
 	fflush(stdout);

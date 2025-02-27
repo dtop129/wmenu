@@ -41,6 +41,9 @@ struct menu {
 	bool restricted;
 	// Whether multi-selection is allowed
 	bool nomulti;
+	// Whether to print the selection index
+	bool printindex;
+	int start_index;
 	// The font used to display the menu
 	char *font;
 	// The number of lines to list items vertically
