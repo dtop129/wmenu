@@ -27,12 +27,16 @@ struct menu *menu_create(menu_callback callback) {
 	struct menu *menu = calloc(1, sizeof(struct menu));
 	menu->strncmp = strncmp;
 	menu->font = "monospace 10";
-	menu->normalbg = 0x222222ff;
-	menu->normalfg = 0xbbbbbbff;
+	menu->normalbg = 0x1f1f28ff;
+	menu->normalfg = 0x957fb8ff;
 	menu->promptbg = 0x005577ff;
 	menu->promptfg = 0xeeeeeeff;
-	menu->selectionbg = 0x005577ff;
-	menu->selectionfg = 0xeeeeeeff;
+	menu->selectionbg = 0x2e2b47ff;
+	menu->selectionfg = 0x7fb4caff;
+	menu->selectedbg = 0x353252ff;
+	menu->selectedfg = 0xf9cb8cff;
+	menu->selectoverbg = 0x3e3a61ff;
+	menu->selectoverfg = 0xf083a2ff;
 	menu->callback = callback;
 	menu->test_surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
 	menu->test_cairo = cairo_create(menu->test_surface);
@@ -62,6 +66,7 @@ void menu_destroy(struct menu *menu) {
 	free_items(menu);
 	cairo_destroy(menu->test_cairo);
 	cairo_surface_destroy(menu->test_surface);
+	free(menu->selid);
 	free(menu);
 }
 
@@ -85,11 +90,12 @@ static bool parse_color(const char *color, uint32_t *result) {
 // Parse menu options from command line arguments.
 void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 	const char *usage =
-		"Usage: wmenu [-biPv] [-f font] [-l lines] [-o output] [-p prompt]\n"
-		"\t[-N color] [-n color] [-M color] [-m color] [-S color] [-s color]\n";
+		"Usage: wmenu [-biPvr1] [-f font] [-l lines] [-o output] [-p prompt]\n"
+		"\t[-N color] [-n color] [-M color] [-m color] [-S color] [-s color]\n"
+		"\t[-T color] [-t color] [-U color] [-u color]\n";
 
 	int opt;
-	while ((opt = getopt(argc, argv, "bhiPvf:l:o:p:N:n:M:m:S:s:")) != -1) {
+	while ((opt = getopt(argc, argv, "bhiPvr1f:l:o:p:N:n:M:m:S:s:T:t:U:u:")) != -1) {
 		switch (opt) {
 		case 'b':
 			menu->bottom = true;
@@ -114,6 +120,12 @@ void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 			break;
 		case 'p':
 			menu->prompt = optarg;
+			break;
+		case 'r':
+			menu->restricted = true;
+			break;
+		case '1':
+			menu->nomulti = true;
 			break;
 		case 'N':
 			if (!parse_color(optarg, &menu->normalbg)) {
@@ -145,6 +157,26 @@ void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 				fprintf(stderr, "Invalid selection foreground color: %s", optarg);
 			}
 			break;
+		case 'T':
+			if (!parse_color(optarg, &menu->selectedbg)) {
+				fprintf(stderr, "Invalid selected background color: %s", optarg);
+			}
+			break;
+		case 't':
+			if (!parse_color(optarg, &menu->selectedfg)) {
+				fprintf(stderr, "Invalid selected foreground color: %s", optarg);
+			}
+			break;
+		case 'U':
+			if (!parse_color(optarg, &menu->selectoverbg)) {
+				fprintf(stderr, "Invalid selected/over background color: %s", optarg);
+			}
+			break;
+		case 'u':
+			if (!parse_color(optarg, &menu->selectoverfg)) {
+				fprintf(stderr, "Invalid selected/over foreground color: %s", optarg);
+			}
+			break;
 		default:
 			fprintf(stderr, "%s", usage);
 			exit(EXIT_FAILURE);
@@ -165,6 +197,13 @@ void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 	menu->padding = height / 2;
 }
 
+static bool issel(struct menu *menu, int id){
+	for (size_t i = 0; i < menu->selidsize; i++)
+		if (menu->selid[i] == id)
+			return true;
+	return false;
+}
+
 // Add an item to the menu.
 void menu_add_item(struct menu *menu, char *text) {
 	if ((menu->item_count & (menu->item_count - 1)) == 0) {
@@ -179,6 +218,7 @@ void menu_add_item(struct menu *menu, char *text) {
 
 	struct item *new = &menu->items[menu->item_count];
 	new->text = text;
+	new->id = menu->item_count;
 
 	menu->item_count++;
 }
@@ -581,10 +621,42 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 	case XKB_KEY_Return:
 	case XKB_KEY_KP_Enter:
 		if (shift) {
+			if (menu->restricted)
+				break;
 			menu->callback(menu, menu->input, true);
-		} else {
+		} else if (ctrl) {
+			if (menu->nomulti)
+				break;
+			if (menu->sel && issel(menu, menu->sel->id)) {
+				for (size_t i = 0; i < menu->selidsize; i++)
+					if (menu->selid[i] == menu->sel->id) {
+						menu->selid[i] = -1;
+						break;
+					}
+				menu->selcount--;
+			} else {
+				size_t i;
+				for (i = 0; i < menu->selidsize; i++)
+					if (menu->selid[i] == -1) {
+						menu->selid[i] = menu->sel->id;
+						break;
+					}
+				if (i == menu->selidsize) {
+					menu->selid = realloc(menu->selid, (menu->selidsize+1) * sizeof(int));
+					menu->selid[menu->selidsize] = menu->sel->id;
+					menu->selidsize++;
+				}
+				menu->selcount++;
+			}
+			if (menu->cursor < len)
+				menu->cursor = nextrune(menu, +1);
+			else if (menu->sel && menu->sel->next_match)
+				menu->sel = menu->sel->next_match;
+
+			render_menu(menu);
+		} else if (menu->sel || !menu->restricted || menu->selcount > 0) {
 			char *text = menu->sel ? menu->sel->text : menu->input;
-			menu->callback(menu, text, !ctrl);
+			menu->callback(menu, text, false);
 		}
 		break;
 	case XKB_KEY_Left:

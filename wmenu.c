@@ -17,16 +17,24 @@ static void read_items(struct menu *menu) {
 	}
 }
 
-static void print_item(struct menu *menu, char *text, bool exit) {
-	puts(text);
-	fflush(stdout);
-	if (exit) {
-		menu->exit = true;
+static void exit_cmd(struct menu *menu, char *text, bool print_text) {
+	if (print_text) {
+		puts(text);
+	} else {
+		for (size_t i = 0; i < menu->selidsize; i++)
+			if (menu->selid[i] != -1)
+				puts(menu->items[menu->selid[i]].text);
+
+		if (menu->selcount == 0)
+			puts(text);
 	}
+
+	fflush(stdout);
+	menu->exit = true;
 }
 
 int main(int argc, char *argv[]) {
-	struct menu *menu = menu_create(print_item);
+	struct menu *menu = menu_create(exit_cmd);
 	menu_getopts(menu, argc, argv);
 	read_items(menu);
 	int status = menu_run(menu);

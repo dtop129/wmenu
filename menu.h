@@ -17,6 +17,8 @@ struct item {
 	struct item *prev_match; // previous matching item
 	struct item *next_match; // next matching item
 	struct page *page;       // the page holding this item
+
+	int id;
 };
 
 // A page of menu items.
@@ -35,6 +37,10 @@ struct menu {
 	int (*strncmp)(const char *, const char *, size_t);
 	// Whether the input is a password
 	bool passwd;
+	// Whether to only allow results coming from stdin
+	bool restricted;
+	// Whether multi-selection is allowed
+	bool nomulti;
 	// The font used to display the menu
 	char *font;
 	// The number of lines to list items vertically
@@ -49,6 +55,10 @@ struct menu {
 	uint32_t promptbg, promptfg;
 	// Selection colors
 	uint32_t selectionbg, selectionfg;
+	// Selected colors
+	uint32_t selectedbg, selectedfg;
+	// Selected/over colors
+	uint32_t selectoverbg, selectoverfg;
 
 	struct wl_context *context;
 
@@ -74,6 +84,10 @@ struct menu {
 	struct item *matches_end; // last matching item
 	struct item *sel;         // selected item
 	struct page *pages;       // list of pages
+
+	int *selid;
+	size_t selidsize;
+	size_t selcount;
 
 	menu_callback callback;
 	bool exit;

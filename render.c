@@ -118,8 +118,28 @@ static void render_cursor(struct menu *menu, cairo_t *cairo) {
 
 // Renders a single menu item horizontally.
 static int render_horizontal_item(struct menu *menu, cairo_t *cairo, struct item *item, int x) {
-	uint32_t bg_color = menu->sel == item ? menu->selectionbg : menu->normalbg;
-	uint32_t fg_color = menu->sel == item ? menu->selectionfg : menu->normalfg;
+	bool selected = false;
+	for (size_t i = 0; i < menu->selidsize && !selected; i++)
+		if (menu->selid[i] == item->id)
+			selected = true;
+
+	uint32_t bg_color, fg_color;
+	if (menu->sel == item) {
+		if (selected) {
+			bg_color = menu->selectoverbg;
+			fg_color = menu->selectoverfg;
+		} else {
+			bg_color = menu->selectionbg;
+			fg_color = menu->selectionfg;
+		}
+	} else if (selected) {
+		bg_color = menu->selectedbg;
+		fg_color = menu->selectedfg;
+	}
+	else {
+		bg_color = menu->normalbg;
+		fg_color = menu->normalfg;
+	}
 
 	return render_text(menu, cairo, item->text, x, 0, 0,
 		bg_color, fg_color, menu->padding, menu->padding);
@@ -127,8 +147,28 @@ static int render_horizontal_item(struct menu *menu, cairo_t *cairo, struct item
 
 // Renders a single menu item vertically.
 static int render_vertical_item(struct menu *menu, cairo_t *cairo, struct item *item, int x, int y) {
-	uint32_t bg_color = menu->sel == item ? menu->selectionbg : menu->normalbg;
-	uint32_t fg_color = menu->sel == item ? menu->selectionfg : menu->normalfg;
+	bool selected = false;
+	for (size_t i = 0; i < menu->selidsize && !selected; i++)
+		if (menu->selid[i] == item->id)
+			selected = true;
+
+	uint32_t bg_color, fg_color;
+	if (menu->sel == item) {
+		if (selected) {
+			bg_color = menu->selectoverbg;
+			fg_color = menu->selectoverfg;
+		} else {
+			bg_color = menu->selectionbg;
+			fg_color = menu->selectionfg;
+		}
+	} else if (selected) {
+		bg_color = menu->selectedbg;
+		fg_color = menu->selectedfg;
+	}
+	else {
+		bg_color = menu->normalbg;
+		fg_color = menu->normalfg;
+	}
 
 	render_text(menu, cairo, item->text, x, y, menu->width - x,
 		bg_color, fg_color, menu->padding, 0);
