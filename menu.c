@@ -56,6 +56,7 @@ static void free_items(struct menu *menu) {
 	for (size_t i = 0; i < menu->item_count; i++) {
 		struct item *item = &menu->items[i];
 		free(item->text);
+		free(item->stext);
 	}
 	free(menu->items);
 }
@@ -219,6 +220,12 @@ void menu_add_item(struct menu *menu, char *text) {
 	struct item *new = &menu->items[menu->item_count];
 	new->text = text;
 	new->id = menu->item_count;
+
+	char *sep;
+	if ((sep = strchr(text, '\t')))
+		new->stext = strndup(text, sep - text);
+	else
+		new->stext = strdup(text);
 
 	menu->item_count++;
 }

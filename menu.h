@@ -13,6 +13,7 @@ typedef void (*menu_callback)(struct menu *menu, char *text, bool exit);
 // A menu item.
 struct item {
 	char *text;
+	char *stext;
 	int width;
 	struct item *prev_match; // previous matching item
 	struct item *next_match; // next matching item

@@ -141,7 +141,7 @@ static int render_horizontal_item(struct menu *menu, cairo_t *cairo, struct item
 		fg_color = menu->normalfg;
 	}
 
-	return render_text(menu, cairo, item->text, x, 0, 0,
+	return render_text(menu, cairo, item->stext, x, 0, 0,
 		bg_color, fg_color, menu->padding, menu->padding);
 }
 
@@ -170,7 +170,7 @@ static int render_vertical_item(struct menu *menu, cairo_t *cairo, struct item *
 		fg_color = menu->normalfg;
 	}
 
-	render_text(menu, cairo, item->text, x, y, menu->width - x,
+	render_text(menu, cairo, item->stext, x, y, menu->width - x,
 		bg_color, fg_color, menu->padding, 0);
 	return menu->line_height;
 }
