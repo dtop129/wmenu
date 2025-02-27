@@ -92,12 +92,12 @@ static bool parse_color(const char *color, uint32_t *result) {
 void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 	const char *usage =
 		"Usage: wmenu [-biPvr1] [-f font] [-l lines] [-o output] [-p prompt]\n"
-		"\t[-x index] [-e height]\n"
+		"\t[-x index] [-e height] [-q query]\n"
 		"\t[-N color] [-n color] [-M color] [-m color] [-S color] [-s color]\n"
 		"\t[-T color] [-t color] [-U color] [-u color]\n";
 
 	int opt;
-	while ((opt = getopt(argc, argv, "bhiPvr1dx:e:f:l:o:p:N:n:M:m:S:s:T:t:U:u:")) != -1) {
+	while ((opt = getopt(argc, argv, "bhiPvr1dq:x:e:f:l:o:p:N:n:M:m:S:s:T:t:U:u:")) != -1) {
 		switch (opt) {
 		case 'b':
 			menu->bottom = true;
@@ -139,6 +139,10 @@ void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 			break;
 		case 'e':
 			menu->line_height = atoi(optarg);
+			break;
+		case 'q':
+			strcpy(menu->input, optarg);
+			menu->cursor = strlen(menu->input);
 			break;
 		case 'N':
 			if (!parse_color(optarg, &menu->normalbg)) {
