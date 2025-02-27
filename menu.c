@@ -23,7 +23,7 @@
 #include "wayland.h"
 
 // Creates and returns a new menu.
-struct menu *menu_create(menu_callback callback) {
+struct menu *menu_create() {
 	struct menu *menu = calloc(1, sizeof(struct menu));
 	menu->strncmp = strncmp;
 	menu->font = "monospace 13";
@@ -37,7 +37,6 @@ struct menu *menu_create(menu_callback callback) {
 	menu->selectedfg = 0xf9cb8cff;
 	menu->selectoverbg = 0x3e3a61ff;
 	menu->selectoverfg = 0xf083a2ff;
-	menu->callback = callback;
 	menu->test_surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
 	menu->test_cairo = cairo_create(menu->test_surface);
 	menu->line_height = 33;
@@ -634,7 +633,7 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 		if (shift) {
 			if (menu->restricted)
 				break;
-			menu->callback(menu, menu->input, true);
+			menu_print_and_exit(menu, true);
 		} else if (ctrl) {
 			if (menu->nomulti)
 				break;
@@ -666,8 +665,7 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 
 			render_menu(menu);
 		} else if (menu->sel || !menu->restricted || menu->selcount > 0) {
-			char *text = menu->sel ? menu->sel->text : menu->input;
-			menu->callback(menu, text, false);
+			menu_print_and_exit(menu, false);
 		}
 		break;
 	case XKB_KEY_Left:
@@ -766,4 +764,20 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 			render_menu(menu);
 		}
 	}
+}
+
+void menu_print_and_exit(struct menu *menu, bool print_query) {
+	if (print_query || (!menu->sel && menu->selcount == 0)) {
+		puts(menu->input);
+	} else {
+		if (menu->selcount == 0)
+			puts(menu->sel->text);
+		else
+			for (size_t i = 0; i < menu->selidsize; i++)
+				if (menu->selid[i] != -1)
+					puts(menu->items[menu->selid[i]].text);
+	}
+
+	fflush(stdout);
+	menu->exit = true;
 }

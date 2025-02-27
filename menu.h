@@ -8,7 +8,6 @@
 #include <wayland-client.h>
 
 struct menu;
-typedef void (*menu_callback)(struct menu *menu, char *text, bool exit);
 
 // A menu item.
 struct item {
@@ -90,12 +89,11 @@ struct menu {
 	size_t selidsize;
 	size_t selcount;
 
-	menu_callback callback;
 	bool exit;
 	bool failure;
 };
 
-struct menu *menu_create(menu_callback callback);
+struct menu *menu_create();
 void menu_destroy(struct menu *menu);
 void menu_getopts(struct menu *menu, int argc, char *argv[]);
 void menu_add_item(struct menu *menu, char *text);
@@ -104,5 +102,6 @@ void menu_render_items(struct menu *menu);
 void menu_paste(struct menu *menu, const char *text, ssize_t len);
 void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 		xkb_keysym_t sym);
+void menu_print_and_exit(struct menu *menu, bool print_query);
 
 #endif
