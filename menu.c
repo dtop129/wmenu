@@ -145,9 +145,6 @@ void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 			menu->cursor = strlen(menu->input);
 			break;
 		case 'n':
-			if (menu->item_count == 0)
-				break;
-
 			menu->initial_index = atoi(optarg);
 			break;
 		case 'M':
@@ -436,9 +433,11 @@ static void match_items(struct menu *menu) {
 }
 
 // Render menu items.
-void menu_render_items(struct menu *menu) {
+void menu_prepare(struct menu *menu) {
 	calc_widths(menu);
 	match_items(menu);
+	if (strlen(menu->input) == 0 && menu->initial_index >= 0 && (uint32_t)menu->initial_index < menu->item_count)
+		menu->sel = menu->items + menu->initial_index;
 	render_menu(menu);
 }
 
