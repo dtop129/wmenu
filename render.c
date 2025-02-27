@@ -195,7 +195,7 @@ static void render_horizontal_page(struct menu *menu, cairo_t *cairo, struct pag
 
 // Renders a page of menu items vertically.
 static void render_vertical_page(struct menu *menu, cairo_t *cairo, struct page *page) {
-	int x = menu->promptw;
+	int x = 0;
 	int y = menu->line_height;
 	for (struct item *item = page->first; item != page->last->next_match; item = item->next_match) {
 		y += render_vertical_item(menu, cairo, item, x, y);
