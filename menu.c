@@ -26,7 +26,7 @@
 struct menu *menu_create(menu_callback callback) {
 	struct menu *menu = calloc(1, sizeof(struct menu));
 	menu->strncmp = strncmp;
-	menu->font = "monospace 10";
+	menu->font = "monospace 13";
 	menu->normalbg = 0x1f1f28ff;
 	menu->normalfg = 0x957fb8ff;
 	menu->promptbg = 0x005577ff;
@@ -40,6 +40,7 @@ struct menu *menu_create(menu_callback callback) {
 	menu->callback = callback;
 	menu->test_surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
 	menu->test_cairo = cairo_create(menu->test_surface);
+	menu->line_height = 33;
 	return menu;
 }
 
@@ -91,12 +92,12 @@ static bool parse_color(const char *color, uint32_t *result) {
 // Parse menu options from command line arguments.
 void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 	const char *usage =
-		"Usage: wmenu [-biPvr1] [-f font] [-l lines] [-o output] [-p prompt]\n"
+		"Usage: wmenu [-biPvr1] [-e height] [-f font] [-l lines] [-o output] [-p prompt]\n"
 		"\t[-N color] [-n color] [-M color] [-m color] [-S color] [-s color]\n"
 		"\t[-T color] [-t color] [-U color] [-u color]\n";
 
 	int opt;
-	while ((opt = getopt(argc, argv, "bhiPvr1f:l:o:p:N:n:M:m:S:s:T:t:U:u:")) != -1) {
+	while ((opt = getopt(argc, argv, "bhiPvr1e:f:l:o:p:N:n:M:m:S:s:T:t:U:u:")) != -1) {
 		switch (opt) {
 		case 'b':
 			menu->bottom = true;
@@ -127,6 +128,9 @@ void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 			break;
 		case '1':
 			menu->nomulti = true;
+			break;
+		case 'e':
+			menu->line_height = atoi(optarg);
 			break;
 		case 'N':
 			if (!parse_color(optarg, &menu->normalbg)) {
@@ -190,7 +194,7 @@ void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 	}
 
 	int height = get_font_height(menu->font);
-	menu->line_height = height + 2;
+	menu->line_height = MAX(menu->line_height, height);
 	menu->height = menu->line_height;
 	if (menu->lines > 0) {
 		menu->height += menu->height * menu->lines;
