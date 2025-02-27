@@ -91,12 +91,13 @@ static bool parse_color(const char *color, uint32_t *result) {
 // Parse menu options from command line arguments.
 void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 	const char *usage =
-		"Usage: wmenu [-biPvr1x] [-e height] [-f font] [-l lines] [-o output] [-p prompt]\n"
+		"Usage: wmenu [-biPvr1] [-f font] [-l lines] [-o output] [-p prompt]\n"
+		"\t[-x index] [-e height]\n"
 		"\t[-N color] [-n color] [-M color] [-m color] [-S color] [-s color]\n"
 		"\t[-T color] [-t color] [-U color] [-u color]\n";
 
 	int opt;
-	while ((opt = getopt(argc, argv, "bhiPvr1x:e:f:l:o:p:N:n:M:m:S:s:T:t:U:u:")) != -1) {
+	while ((opt = getopt(argc, argv, "bhiPvr1dx:e:f:l:o:p:N:n:M:m:S:s:T:t:U:u:")) != -1) {
 		switch (opt) {
 		case 'b':
 			menu->bottom = true;
@@ -132,6 +133,9 @@ void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 			menu->printindex = true;
 			menu->restricted = true;
 			menu->start_index = atoi(optarg);
+			break;
+		case 'd':
+			menu->nostdin = true;
 			break;
 		case 'e':
 			menu->line_height = atoi(optarg);
@@ -529,14 +533,25 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 		case XKB_KEY_bracketleft:
 			sym = XKB_KEY_Escape;
 			break;
-		case XKB_KEY_h:
-			sym = XKB_KEY_BackSpace;
-			break;
 		case XKB_KEY_i:
 			sym = XKB_KEY_Tab;
 			break;
+		case XKB_KEY_h:
+		case XKB_KEY_H:
+			sym = XKB_KEY_Left;
+			break;
 		case XKB_KEY_j:
 		case XKB_KEY_J:
+			sym = XKB_KEY_Down;
+			break;
+		case XKB_KEY_l:
+		case XKB_KEY_L:
+			sym = XKB_KEY_Right;
+			break;
+		case XKB_KEY_k:
+		case XKB_KEY_K:
+			sym = XKB_KEY_Up;
+			break;
 		case XKB_KEY_m:
 		case XKB_KEY_M:
 			sym = XKB_KEY_Return;
@@ -549,7 +564,7 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 			sym = XKB_KEY_Up;
 			break;
 
-		case XKB_KEY_k:
+		case XKB_KEY_o:
 			// Delete right
 			menu->input[menu->cursor] = '\0';
 			match_items(menu);

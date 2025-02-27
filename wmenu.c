@@ -20,7 +20,8 @@ static void read_items(struct menu *menu) {
 int main(int argc, char *argv[]) {
 	struct menu *menu = menu_create();
 	menu_getopts(menu, argc, argv);
-	read_items(menu);
+	if (!menu->nostdin)
+		read_items(menu);
 	int status = menu_run(menu);
 	menu_destroy(menu);
 	return status;

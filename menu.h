@@ -44,6 +44,8 @@ struct menu {
 	// Whether to print the selection index
 	bool printindex;
 	int start_index;
+	// Whether to not read from stdin
+	bool nostdin;
 	// The font used to display the menu
 	char *font;
 	// The number of lines to list items vertically
