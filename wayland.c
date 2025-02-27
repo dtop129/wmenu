@@ -18,6 +18,7 @@
 
 #include "menu.h"
 #include "pool-buffer.h"
+#include "render.h"
 #include "wayland.h"
 #include "xdg-activation-v1-client-protocol.h"
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
@@ -462,6 +463,9 @@ int menu_run(struct menu *menu) {
 	wl_surface_commit(context->surface);
 	wl_display_roundtrip(context->display);
 	menu_render_items(menu);
+	if (menu->initial_index >= 0 && (uint32_t)menu->initial_index < menu->item_count)
+		menu->sel = menu->items + menu->initial_index;
+	render_menu(menu);
 
 	struct pollfd fds[] = {
 		{ wl_display_get_fd(context->display), POLLIN },

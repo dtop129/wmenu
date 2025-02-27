@@ -97,7 +97,7 @@ void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 		"\t[-T color] [-t color] [-U color] [-u color]\n";
 
 	int opt;
-	while ((opt = getopt(argc, argv, "bhiPvr1dq:x:e:f:l:o:p:N:n:M:m:S:s:T:t:U:u:")) != -1) {
+	while ((opt = getopt(argc, argv, "bhiPvr1dn:q:x:e:f:l:o:p:M:m:S:s:T:t:U:u:")) != -1) {
 		switch (opt) {
 		case 'b':
 			menu->bottom = true;
@@ -144,24 +144,20 @@ void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 			strcpy(menu->input, optarg);
 			menu->cursor = strlen(menu->input);
 			break;
-		case 'N':
+		case 'n':
+			if (menu->item_count == 0)
+				break;
+
+			menu->initial_index = atoi(optarg);
+			break;
+		case 'M':
 			if (!parse_color(optarg, &menu->normalbg)) {
 				fprintf(stderr, "Invalid background color: %s", optarg);
 			}
 			break;
-		case 'n':
+		case 'm':
 			if (!parse_color(optarg, &menu->normalfg)) {
 				fprintf(stderr, "Invalid foreground color: %s", optarg);
-			}
-			break;
-		case 'M':
-			if (!parse_color(optarg, &menu->promptbg)) {
-				fprintf(stderr, "Invalid prompt background color: %s", optarg);
-			}
-			break;
-		case 'm':
-			if (!parse_color(optarg, &menu->promptfg)) {
-				fprintf(stderr, "Invalid prompt foreground color: %s", optarg);
 			}
 			break;
 		case 'S':
@@ -682,10 +678,7 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 				}
 				menu->selcount++;
 			}
-			if (menu->cursor < len)
-				menu->cursor = nextrune(menu, +1);
-			else if (menu->sel && menu->sel->next_match)
-				menu->sel = menu->sel->next_match;
+			menu->sel = menu->sel->next_match;
 
 			render_menu(menu);
 		} else if (menu->sel || !menu->restricted || menu->selcount > 0) {
