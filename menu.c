@@ -67,7 +67,7 @@ void menu_destroy(struct menu *menu) {
 	free_items(menu);
 	cairo_destroy(menu->test_cairo);
 	cairo_surface_destroy(menu->test_surface);
-	free(menu->selid);
+	free(menu->sel_items);
 	free(menu);
 }
 
@@ -207,13 +207,6 @@ void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 	menu->padding = height / 2;
 }
 
-static bool issel(struct menu *menu, int id){
-	for (size_t i = 0; i < menu->selidsize; i++)
-		if (menu->selid[i] == id)
-			return true;
-	return false;
-}
-
 // Add an item to the menu.
 void menu_add_item(struct menu *menu, char *text) {
 	if ((menu->item_count & (menu->item_count - 1)) == 0) {
@@ -228,13 +221,13 @@ void menu_add_item(struct menu *menu, char *text) {
 
 	struct item *new = &menu->items[menu->item_count];
 	new->text = text;
-	new->id = menu->item_count;
 
 	char *sep;
 	if ((sep = strchr(text, '\t')))
 		new->stext = strndup(text, sep - text);
 	else
 		new->stext = strdup(text);
+	new->selected_index = -1;
 
 	menu->item_count++;
 }
@@ -656,33 +649,35 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 		} else if (ctrl) {
 			if (menu->nomulti)
 				break;
-			if (menu->sel && issel(menu, menu->sel->id)) {
-				for (size_t i = 0; i < menu->selidsize; i++)
-					if (menu->selid[i] == menu->sel->id) {
-						menu->selid[i] = -1;
-						break;
-					}
-				menu->selcount--;
+			if (menu->sel && menu->sel->selected_index != -1) {
+				menu->sel_items[menu->sel->selected_index] = NULL;
+				menu->sel->selected_index = -1;
+				menu->sel_count--;
 			} else {
 				size_t i;
-				for (i = 0; i < menu->selidsize; i++)
-					if (menu->selid[i] == -1) {
-						menu->selid[i] = menu->sel->id;
+				for (i = 0; i < menu->selarr_size; i++)
+					if (!menu->sel_items[i])
 						break;
-					}
-				if (i == menu->selidsize) {
-					menu->selid = realloc(menu->selid, (menu->selidsize+1) * sizeof(int));
-					menu->selid[menu->selidsize] = menu->sel->id;
-					menu->selidsize++;
-				}
-				menu->selcount++;
-			}
-			menu->sel = menu->sel->next_match;
 
+				if (i == menu->selarr_size) {
+					menu->selarr_size++;
+					menu->sel_items = realloc(menu->sel_items, menu->selarr_size * sizeof(struct item*));
+					if (!menu->sel_items) {
+						fprintf(stderr, "could not realloc %zu bytes", sizeof(struct item*) * menu->selarr_size);
+						exit(EXIT_FAILURE);
+					}
+				}
+
+				menu->sel_items[i] = menu->sel;
+				menu->sel->selected_index = i;
+				menu->sel_count++;
+			}
+
+			if (menu->sel->next_match)
+				menu->sel = menu->sel->next_match;
 			render_menu(menu);
-		} else if (menu->sel || !menu->restricted || menu->selcount > 0) {
+		} else if (menu->sel || menu->sel_count > 0 || !menu->restricted)
 			menu_print_and_exit(menu, false);
-		}
 		break;
 	case XKB_KEY_Left:
 	case XKB_KEY_KP_Left:
@@ -783,21 +778,21 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 }
 
 void menu_print_and_exit(struct menu *menu, bool print_query) {
-	if (print_query || (!menu->sel && menu->selcount == 0)) {
+	if (print_query || (!menu->sel && menu->sel_count == 0)) {
 		puts(menu->input);
 	} else {
-		if (menu->selcount == 0)
+		if (menu->sel_count == 0)
 			if (menu->printindex)
-				printf("%d\n", menu->sel->id + menu->start_index);
+				printf("%d\n", (int)(menu->sel - menu->items) + menu->start_index);
 			else
 				puts(menu->sel->text);
 		else
-			for (size_t i = 0; i < menu->selidsize; i++)
-				if (menu->selid[i] != -1) {
+			for (size_t i = 0; i < menu->selarr_size; i++)
+				if (menu->sel_items[i]) {
 					if (menu->printindex)
-						printf("%d\n", menu->items[menu->selid[i]].id + menu->start_index);
+						printf("%lu\n", (menu->sel_items[i] - menu->items) + menu->start_index);
 					else
-						puts(menu->items[menu->selid[i]].text);
+						puts(menu->sel_items[i]->text);
 				}
 	}
 

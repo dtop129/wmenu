@@ -18,7 +18,7 @@ struct item {
 	struct item *next_match; // next matching item
 	struct page *page;       // the page holding this item
 
-	int id;
+	int selected_index;
 };
 
 // A page of menu items.
@@ -92,9 +92,9 @@ struct menu {
 	struct item *sel;         // selected item
 	struct page *pages;       // list of pages
 
-	int *selid;
-	size_t selidsize;
-	size_t selcount;
+	struct item **sel_items;
+	size_t selarr_size;
+	size_t sel_count;
 
 	bool exit;
 	bool failure;
