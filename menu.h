@@ -13,7 +13,6 @@ struct menu;
 struct item {
 	char *text;
 	char *stext;
-	int width;
 	struct item *prev_match; // previous matching item
 	struct item *next_match; // next matching item
 	struct page *page;       // the page holding this item

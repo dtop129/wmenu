@@ -307,7 +307,7 @@ static void page_items(struct menu *menu) {
 			int total_width = 0;
 			int items = 0;
 			while (item) {
-				total_width += item->width + 2 * menu->padding;
+				total_width += text_width(menu->test_cairo, menu->font, item->text) + 2 * menu->padding;
 				if (total_width > max_width && items > 0) {
 					break;
 				}
