@@ -25,7 +25,7 @@
 // Creates and returns a new menu.
 struct menu *menu_create() {
 	struct menu *menu = calloc(1, sizeof(struct menu));
-	menu->strncmp = strncmp;
+	menu->strncmp = strncasecmp;
 	menu->font = "monospace 13";
 	menu->normalbg = 0x1f1f28ff;
 	menu->normalfg = 0x957fb8ff;
@@ -91,19 +91,19 @@ static bool parse_color(const char *color, uint32_t *result) {
 // Parse menu options from command line arguments.
 void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 	const char *usage =
-		"Usage: wmenu [-biPvr1] [-f font] [-l lines] [-o output] [-p prompt]\n"
+		"Usage: wmenu [-bcPvr1] [-f font] [-l lines] [-o output] [-p prompt]\n"
 		"\t[-x index] [-e height] [-q query]\n"
 		"\t[-N color] [-n color] [-M color] [-m color] [-S color] [-s color]\n"
 		"\t[-T color] [-t color] [-U color] [-u color]\n";
 
 	int opt;
-	while ((opt = getopt(argc, argv, "bhiPvr1dn:q:x:e:f:l:o:p:M:m:S:s:T:t:U:u:")) != -1) {
+	while ((opt = getopt(argc, argv, "bhcPvr1dn:q:x:e:f:l:o:p:M:m:S:s:T:t:U:u:")) != -1) {
 		switch (opt) {
 		case 'b':
 			menu->bottom = true;
 			break;
-		case 'i':
-			menu->strncmp = strncasecmp;
+		case 'c':
+			menu->strncmp = strncmp;
 			break;
 		case 'P':
 			menu->passwd = true;
