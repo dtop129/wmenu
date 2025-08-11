@@ -17,6 +17,7 @@
 
 #include "menu.h"
 #include "pool-buffer.h"
+#include "render.h"
 #include "wayland.h"
 #include "xdg-activation-v1-client-protocol.h"
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
@@ -207,6 +208,7 @@ static void noop() {
 static void surface_enter(void *data, struct wl_surface *surface, struct wl_output *wl_output) {
 	struct wl_context *context = data;
 	context->output = wl_output_get_user_data(wl_output);
+	menu_invalidate(context->menu);
 }
 
 static const struct wl_surface_listener surface_listener = {
@@ -490,6 +492,11 @@ int menu_run(struct menu *menu) {
 
 		if (fds[1].revents & POLLIN) {
 			keyboard_repeat(context->keyboard);
+		}
+
+		// Render the menu if necessary
+		if (!menu->rendered) {
+			render_menu(menu);
 		}
 	}
 

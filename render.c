@@ -230,4 +230,6 @@ void render_menu(struct menu *menu) {
 	wl_surface_attach(surface, buffer->buffer, 0, 0);
 	wl_surface_damage(surface, 0, 0, menu->width, menu->height);
 	wl_surface_commit(surface);
+
+	menu->rendered = true;
 }

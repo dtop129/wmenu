@@ -223,10 +223,11 @@ void menu_add_item(struct menu *menu, char *text) {
 	new->text = text;
 
 	char *sep;
-	if ((sep = strchr(text, '\t')))
+	if ((sep = strchr(text, '\t'))) {
 		new->stext = strndup(text, sep - text);
-	else
+	} else {
 		new->stext = strdup(text);
+	}
 	new->selected_index = -1;
 
 	menu->item_count++;
@@ -425,12 +426,18 @@ static void match_items(struct menu *menu) {
 	}
 }
 
+// Marks the menu as needing to be rendered again.
+void menu_invalidate(struct menu *menu) {
+	menu->rendered = false;
+}
+
 // Render menu items.
 void menu_prepare(struct menu *menu) {
 	calc_widths(menu);
 	match_items(menu);
-	if (strlen(menu->input) == 0 && menu->initial_index >= 0 && (uint32_t)menu->initial_index < menu->item_count)
+	if (strlen(menu->input) == 0 && menu->initial_index >= 0 && (uint32_t)menu->initial_index < menu->item_count) {
 		menu->sel = menu->items + menu->initial_index;
+	}
 	render_menu(menu);
 }
 
@@ -560,13 +567,13 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 			// Delete right
 			menu->input[menu->cursor] = '\0';
 			match_items(menu);
-			render_menu(menu);
+			menu_invalidate(menu);
 			return;
 		case XKB_KEY_u:
 			// Delete left
 			insert(menu, NULL, 0 - menu->cursor);
 			match_items(menu);
-			render_menu(menu);
+			menu_invalidate(menu);
 			return;
 		case XKB_KEY_w:
 			// Delete word
@@ -577,7 +584,7 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 				insert(menu, NULL, nextrune(menu, -1) - menu->cursor);
 			}
 			match_items(menu);
-			render_menu(menu);
+			menu_invalidate(menu);
 			return;
 		case XKB_KEY_Y:
 			// Paste clipboard
@@ -585,17 +592,17 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 				return;
 			}
 			match_items(menu);
-			render_menu(menu);
+			menu_invalidate(menu);
 			return;
 		case XKB_KEY_Left:
 		case XKB_KEY_KP_Left:
 			movewordedge(menu, -1);
-			render_menu(menu);
+			menu_invalidate(menu);
 			return;
 		case XKB_KEY_Right:
 		case XKB_KEY_KP_Right:
 			movewordedge(menu, +1);
-			render_menu(menu);
+			menu_invalidate(menu);
 			return;
 
 		case XKB_KEY_Return:
@@ -609,11 +616,11 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 		switch (sym) {
 		case XKB_KEY_b:
 			movewordedge(menu, -1);
-			render_menu(menu);
+			menu_invalidate(menu);
 			return;
 		case XKB_KEY_f:
 			movewordedge(menu, +1);
-			render_menu(menu);
+			menu_invalidate(menu);
 			return;
 		case XKB_KEY_g:
 			sym = XKB_KEY_Home;
@@ -643,12 +650,14 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 	case XKB_KEY_Return:
 	case XKB_KEY_KP_Enter:
 		if (shift) {
-			if (menu->restricted)
+			if (menu->restricted) {
 				break;
+			}
 			menu_print_and_exit(menu, true);
 		} else if (ctrl) {
-			if (menu->nomulti)
+			if (menu->nomulti) {
 				break;
+			}
 			if (menu->sel && menu->sel->selected_index != -1) {
 				menu->sel_items[menu->sel->selected_index] = NULL;
 				menu->sel->selected_index = -1;
@@ -673,9 +682,11 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 				menu->sel_count++;
 			}
 
-			if (menu->sel->next_match)
+			if (menu->sel->next_match) {
 				menu->sel = menu->sel->next_match;
-			render_menu(menu);
+			}
+
+			menu_invalidate(menu);
 		} else if (menu->sel || menu->sel_count > 0 || !menu->restricted)
 			menu_print_and_exit(menu, false);
 		break;
@@ -685,10 +696,10 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 	case XKB_KEY_KP_Up:
 		if (menu->sel && menu->sel->prev_match) {
 			menu->sel = menu->sel->prev_match;
-			render_menu(menu);
+			menu_invalidate(menu);
 		} else if (menu->cursor > 0) {
 			menu->cursor = nextrune(menu, -1);
-			render_menu(menu);
+			menu_invalidate(menu);
 		}
 		break;
 	case XKB_KEY_Right:
@@ -697,51 +708,51 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 	case XKB_KEY_KP_Down:
 		if (menu->cursor < len) {
 			menu->cursor = nextrune(menu, +1);
-			render_menu(menu);
+			menu_invalidate(menu);
 		} else if (menu->sel && menu->sel->next_match) {
 			menu->sel = menu->sel->next_match;
-			render_menu(menu);
+			menu_invalidate(menu);
 		}
 		break;
 	case XKB_KEY_Prior:
 	case XKB_KEY_KP_Prior:
 		if (menu->sel && menu->sel->page->prev) {
 			menu->sel = menu->sel->page->prev->first;
-			render_menu(menu);
+			menu_invalidate(menu);
 		}
 		break;
 	case XKB_KEY_Next:
 	case XKB_KEY_KP_Next:
 		if (menu->sel && menu->sel->page->next) {
 			menu->sel = menu->sel->page->next->first;
-			render_menu(menu);
+			menu_invalidate(menu);
 		}
 		break;
 	case XKB_KEY_Home:
 	case XKB_KEY_KP_Home:
 		if (menu->sel == menu->matches) {
 			menu->cursor = 0;
-			render_menu(menu);
+			menu_invalidate(menu);
 		} else {
 			menu->sel = menu->matches;
-			render_menu(menu);
+			menu_invalidate(menu);
 		}
 		break;
 	case XKB_KEY_End:
 	case XKB_KEY_KP_End:
 		if (menu->cursor < len) {
 			menu->cursor = len;
-			render_menu(menu);
+			menu_invalidate(menu);
 		} else {
 			menu->sel = menu->matches_end;
-			render_menu(menu);
+			menu_invalidate(menu);
 		}
 		break;
 	case XKB_KEY_BackSpace:
 		if (menu->cursor > 0) {
 			insert(menu, NULL, nextrune(menu, -1) - menu->cursor);
 			match_items(menu);
-			render_menu(menu);
+			menu_invalidate(menu);
 		}
 		break;
 	case XKB_KEY_Delete:
@@ -752,7 +763,7 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 		menu->cursor = nextrune(menu, +1);
 		insert(menu, NULL, nextrune(menu, -1) - menu->cursor);
 		match_items(menu);
-		render_menu(menu);
+		menu_invalidate(menu);
 		break;
 	case XKB_KEY_Tab:
 		if (!menu->sel) {
@@ -762,7 +773,7 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 		memcpy(menu->input, menu->sel->text, menu->cursor);
 		menu->input[menu->cursor] = '\0';
 		match_items(menu);
-		render_menu(menu);
+		menu_invalidate(menu);
 		break;
 	case XKB_KEY_Escape:
 		menu->exit = true;
@@ -772,7 +783,7 @@ void menu_keypress(struct menu *menu, enum wl_keyboard_key_state key_state,
 		if (xkb_keysym_to_utf8(sym, buf, 8)) {
 			insert(menu, buf, strnlen(buf, 8));
 			match_items(menu);
-			render_menu(menu);
+			menu_invalidate(menu);
 		}
 	}
 }
@@ -782,17 +793,19 @@ void menu_print_and_exit(struct menu *menu, bool print_query) {
 		puts(menu->input);
 	} else {
 		if (menu->sel_count == 0)
-			if (menu->printindex)
+			if (menu->printindex) {
 				printf("%d\n", (int)(menu->sel - menu->items) + menu->start_index);
-			else
+			} else {
 				puts(menu->sel->text);
+			}
 		else
 			for (size_t i = 0; i < menu->selarr_size; i++)
 				if (menu->sel_items[i]) {
-					if (menu->printindex)
+					if (menu->printindex) {
 						printf("%lu\n", (menu->sel_items[i] - menu->items) + menu->start_index);
-					else
+					} else {
 						puts(menu->sel_items[i]->text);
+					}
 				}
 	}
 
