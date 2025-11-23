@@ -198,10 +198,17 @@ void menu_getopts(struct menu *menu, int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
+}
+
+// Compute menu line height and padding.
+void menu_calc_height(struct menu *menu) {
 	int height = get_font_height(menu->font);
 	menu->line_height = MAX(menu->line_height, height);
 	menu->height = menu->line_height;
 	if (menu->lines > 0) {
+		if (menu->item_count < (size_t)menu->lines) {
+			menu->lines = menu->item_count;
+		}
 		menu->height += menu->height * menu->lines;
 	}
 	menu->padding = height / 2;
@@ -239,6 +246,7 @@ static int compare_items(const void *a, const void *b) {
 	return strcmp(item_a->text, item_b->text);
 }
 
+// Sort and deduplicate menu items.
 void menu_sort_and_deduplicate(struct menu *menu) {
 	size_t j = 1;
 	size_t i;

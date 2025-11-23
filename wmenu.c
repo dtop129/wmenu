@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
 	menu_getopts(menu, argc, argv);
 	if (!menu->nostdin)
 		read_items(menu);
+	menu_calc_height(menu);
 	int status = menu_run(menu);
 	menu_destroy(menu);
 	return status;

@@ -105,6 +105,7 @@ void menu_destroy(struct menu *menu);
 void menu_getopts(struct menu *menu, int argc, char *argv[]);
 void menu_add_item(struct menu *menu, char *text);
 void menu_sort_and_deduplicate(struct menu *menu);
+void menu_calc_height(struct menu *menu);
 void menu_invalidate(struct menu *menu);
 void menu_prepare(struct menu *menu);
 void menu_paste(struct menu *menu, const char *text, ssize_t len);
